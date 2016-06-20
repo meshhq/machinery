@@ -29,6 +29,12 @@ type ChainAsyncResult struct {
 	backend      Backend
 }
 
+// GroupChainAsyncResult represents a result of a chain of groups
+type GroupChainAsyncResult struct {
+	asyncResults []*AsyncResult
+	backend      Backend
+}
+
 // NewAsyncResult creates AsyncResult instance
 func NewAsyncResult(signature *signatures.TaskSignature, backend Backend) *AsyncResult {
 	return &AsyncResult{
@@ -53,6 +59,18 @@ func NewChordAsyncResult(groupTasks []*signatures.TaskSignature, chordCallback *
 
 // NewChainAsyncResult creates ChainAsyncResult instance
 func NewChainAsyncResult(tasks []*signatures.TaskSignature, backend Backend) *ChainAsyncResult {
+	asyncResults := make([]*AsyncResult, len(tasks))
+	for i, task := range tasks {
+		asyncResults[i] = NewAsyncResult(task, backend)
+	}
+	return &ChainAsyncResult{
+		asyncResults: asyncResults,
+		backend:      backend,
+	}
+}
+
+// NewGroupChainAsyncResult creates ChainAsyncResult instance
+func NewGroupChainAsyncResult(tasks []*signatures.TaskSignature, backend Backend) *ChainAsyncResult {
 	asyncResults := make([]*AsyncResult, len(tasks))
 	for i, task := range tasks {
 		asyncResults[i] = NewAsyncResult(task, backend)
