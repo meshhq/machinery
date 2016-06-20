@@ -31,7 +31,7 @@ type ChainAsyncResult struct {
 
 // GroupChainAsyncResult represents a result of a chain of groups
 type GroupChainAsyncResult struct {
-	AsyncResults [][]*AsyncResult
+	GroupResults [][]*AsyncResult
 	Backend      Backend
 }
 
