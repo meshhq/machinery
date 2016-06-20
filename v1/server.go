@@ -208,9 +208,10 @@ func (server *Server) SendGroupChain(groupChain *GroupChain) (*backends.GroupCha
 		}
 		results = append(results, asyncResult)
 	}
-	return &backends.ChainAsyncResult{
-		asyncResults: results,
-		backend:      server.backend,
+
+	return &backends.GroupChainAsyncResult{
+		AsyncResults: results,
+		Backend:      server.backend,
 	}, nil
 }
 

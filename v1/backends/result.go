@@ -31,8 +31,8 @@ type ChainAsyncResult struct {
 
 // GroupChainAsyncResult represents a result of a chain of groups
 type GroupChainAsyncResult struct {
-	asyncResults [][]*AsyncResult
-	backend      Backend
+	AsyncResults [][]*AsyncResult
+	Backend      Backend
 }
 
 // NewAsyncResult creates AsyncResult instance
