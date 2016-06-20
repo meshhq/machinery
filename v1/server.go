@@ -208,7 +208,10 @@ func (server *Server) SendGroupChain(groupChain *GroupChain) (*backends.GroupCha
 		}
 		results = append(results, asyncResult)
 	}
-	return results, nil
+	return &backends.ChainAsyncResult{
+		asyncResults: results,
+		backend:      server.backend,
+	}, nil
 }
 
 // SendChord triggers a group of parallel tasks with a callback

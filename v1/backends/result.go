@@ -31,7 +31,7 @@ type ChainAsyncResult struct {
 
 // GroupChainAsyncResult represents a result of a chain of groups
 type GroupChainAsyncResult struct {
-	asyncResults []*AsyncResult
+	asyncResults [][]*AsyncResult
 	backend      Backend
 }
 
@@ -59,18 +59,6 @@ func NewChordAsyncResult(groupTasks []*signatures.TaskSignature, chordCallback *
 
 // NewChainAsyncResult creates ChainAsyncResult instance
 func NewChainAsyncResult(tasks []*signatures.TaskSignature, backend Backend) *ChainAsyncResult {
-	asyncResults := make([]*AsyncResult, len(tasks))
-	for i, task := range tasks {
-		asyncResults[i] = NewAsyncResult(task, backend)
-	}
-	return &ChainAsyncResult{
-		asyncResults: asyncResults,
-		backend:      backend,
-	}
-}
-
-// NewGroupChainAsyncResult creates ChainAsyncResult instance
-func NewGroupChainAsyncResult(tasks []*signatures.TaskSignature, backend Backend) *ChainAsyncResult {
 	asyncResults := make([]*AsyncResult, len(tasks))
 	for i, task := range tasks {
 		asyncResults[i] = NewAsyncResult(task, backend)
@@ -111,38 +99,38 @@ func (asyncResult *AsyncResult) Get() (reflect.Value, error) {
 
 // Get returns task result limited in time(synchronous blocking call)
 func (asyncResult *AsyncResult) GetWithTimeout(timeoutD, sleepD time.Duration) (reflect.Value, error) {
-       if asyncResult.backend == nil {
-               return reflect.Value{}, errors.New("Result backend not configured")
-       }
+	if asyncResult.backend == nil {
+		return reflect.Value{}, errors.New("Result backend not configured")
+	}
 
-       timeout := time.NewTimer(timeoutD)
+	timeout := time.NewTimer(timeoutD)
 
 	for {
-               select {
-               case <-timeout.C:
-                       return reflect.Value{}, errors.New("Timeout reached")
-               default:
-                       asyncResult.GetState()
+		select {
+		case <-timeout.C:
+			return reflect.Value{}, errors.New("Timeout reached")
+		default:
+			asyncResult.GetState()
 
-                       // Purge state if we are using AMQP backend
-                       _, isAMQPBackend := asyncResult.backend.(*AMQPBackend)
-                       if isAMQPBackend && asyncResult.taskState.IsCompleted() {
-                               asyncResult.backend.PurgeState(asyncResult.taskState.TaskUUID)
-                       }
+			// Purge state if we are using AMQP backend
+			_, isAMQPBackend := asyncResult.backend.(*AMQPBackend)
+			if isAMQPBackend && asyncResult.taskState.IsCompleted() {
+				asyncResult.backend.PurgeState(asyncResult.taskState.TaskUUID)
+			}
 
-                       if asyncResult.taskState.IsSuccess() {
-                               return utils.ReflectValue(
-                                       asyncResult.taskState.Result.Type,
-                                       asyncResult.taskState.Result.Value,
-                               )
-                       }
+			if asyncResult.taskState.IsSuccess() {
+				return utils.ReflectValue(
+					asyncResult.taskState.Result.Type,
+					asyncResult.taskState.Result.Value,
+				)
+			}
 
-                       if asyncResult.taskState.IsFailure() {
-                               return reflect.Value{}, errors.New(asyncResult.taskState.Error)
-                       }
-                       time.Sleep(sleepD)
-               }
-       }
+			if asyncResult.taskState.IsFailure() {
+				return reflect.Value{}, errors.New(asyncResult.taskState.Error)
+			}
+			time.Sleep(sleepD)
+		}
+	}
 }
 
 // GetState returns latest task state
