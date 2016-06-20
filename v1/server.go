@@ -198,6 +198,19 @@ func (server *Server) SendGroup(group *Group) ([]*backends.AsyncResult, error) {
 	}
 }
 
+// SendGroupChain triggers the serial execution of a chain of groups
+func (server *Server) SendGroupChain(groupChain *GroupChain) (*backends.GroupChainAsyncResult, error) {
+	results := [][]*backends.AsyncResult{}
+	for _, group := range groupChain.Groups {
+		asyncResult, err := server.SendGroup(group)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, asyncResult)
+	}
+	return results, nil
+}
+
 // SendChord triggers a group of parallel tasks with a callback
 func (server *Server) SendChord(chord *Chord) (*backends.ChordAsyncResult, error) {
 	_, err := server.SendGroup(chord.Group)

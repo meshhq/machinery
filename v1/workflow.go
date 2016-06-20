@@ -18,6 +18,12 @@ type Group struct {
 	Tasks     []*signatures.TaskSignature
 }
 
+// GroupChain creates a chain of groups to be executed one after another
+type GroupChain struct {
+	GroupChainUUID string
+	Groups         []*Group
+}
+
 // Chord adds an optional callback to the group to be executed
 // after all tasks in the group finished
 type Chord struct {
@@ -48,7 +54,6 @@ func NewChain(tasks ...*signatures.TaskSignature) *Chain {
 	for _, task := range chain.Tasks {
 		task.UUID = fmt.Sprintf("task_%v", uuid.New())
 	}
-
 	return chain
 }
 
@@ -70,6 +75,17 @@ func NewGroup(tasks ...*signatures.TaskSignature) *Group {
 	return &Group{
 		GroupUUID: groupUUID,
 		Tasks:     tasks,
+	}
+}
+
+// NewGroupChain creates GroupChain instance
+func NewGroupChain(groups ...*Group) *GroupChain {
+	// Generate a group UUID
+	groupChainUUID := fmt.Sprintf("group_%v", uuid.New())
+
+	return &GroupChain{
+		GroupChainUUID: groupChainUUID,
+		Groups:         groups,
 	}
 }
 

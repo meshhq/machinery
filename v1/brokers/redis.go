@@ -169,6 +169,48 @@ func (redisBroker *RedisBroker) Publish(signature *signatures.TaskSignature) err
 	return err
 }
 
+// PendingTasks fetches all pending tasks in the queue.
+func (redisBroker *RedisBroker) PendingTasks(start int, stop int) (interface{}, error) {
+	conn, err := redisBroker.open()
+	if err != nil {
+		return nil, fmt.Errorf("Dial: %s", err)
+	}
+	defer conn.Close()
+
+	test, err := conn.Do("LRANGE", redisBroker.config.DefaultQueue, start, stop)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return nil, err
+	}
+	results, err := redis.ByteSlices(test, err)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return nil, err
+	}
+
+	var taskSignatures []*signatures.TaskSignature
+	for _, result := range results {
+		var taskSignature signatures.TaskSignature
+		if err := json.Unmarshal(result, &taskSignature); err != nil {
+			return nil, err
+		}
+		taskSignatures = append(taskSignatures, &taskSignature)
+	}
+	return taskSignatures, nil
+}
+
+// PurgeQueue purges all pending tasks in the queue.
+func (redisBroker *RedisBroker) PurgeQueue() error {
+	conn, err := redisBroker.open()
+	if err != nil {
+		return nil
+	}
+	defer conn.Close()
+
+	_, err = conn.Do("DEL", redisBroker.config.DefaultQueue)
+	return err
+}
+
 // Consume a single message
 func (redisBroker *RedisBroker) consumeOne(item []byte, taskProcessor TaskProcessor) {
 	log.Printf("Received new message: %s", item)
